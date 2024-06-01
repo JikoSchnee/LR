@@ -4,7 +4,7 @@ function LR
     prompt = {'请输入地图大小:','请输入障碍物的数量:','请输入怪物1的数量:','请输入方向怪物的数量:','是否添加电磁炮(>0为true):','硬核模式(>0为true):','请输入BPM:'};
     dlgtitle = 'Lethal Rhythm';
     dims = [1 35];
-    definput = {'15','5','3','3','1','0','60'};
+    definput = {'15','8','3','3','1','0','60'};
     answer = inputdlg(prompt, dlgtitle, dims, definput);
 
     % 将输入转换为数值
@@ -98,6 +98,11 @@ function LR
     beatTimer = timer('ExecutionMode', 'FixedRate', 'Period', beatPeriod, 'TimerFcn', @beatFunction);
     beatTimer2 = timer('ExecutionMode', 'FixedRate', 'Period', beatPeriod, 'TimerFcn', @beatFunction2, 'StartDelay', beatPeriod / 2);
     gameSetting()
+
+    % 音频
+    [y, Fs] = audioread('bgm.mp3');
+    playerAudio = audioplayer(y, Fs);
+    play(playerAudio); % 开始播放音频
 
     start(game)
     start(beatTimer)
@@ -452,6 +457,8 @@ function LR
         if isGameOver
             stop(game);
             stop(beatTimer);
+            stop(beatTimer2);
+            stop(playerAudio); % 暂停音频
             % 弹出得分面板
             choice = questdlg(['Game Over! Your score is: ', num2str(score), '. Do you want to restart?'], ...
                 'Game Over', ...
