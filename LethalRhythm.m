@@ -1,10 +1,30 @@
-LR
+try 
+     LR
+catch ME
+    % 如果发生错误，停止音频
+    if exist('playerAudio', 'var')
+        stop(playerAudio);
+    end
+    rethrow(ME);
+end
 function LR
     % 初始设置窗口
-    prompt = {'请输入地图大小:','请输入障碍物的数量:','请输入怪物1的数量:','请输入方向怪物的数量:','是否添加电磁炮(>0为true):','硬核模式(>0为true):','请输入BPM:'};
+    prompt = {'请输入地图大小:',
+                '请输入障碍物的数量:',
+                '请输入怪物1的数量:',
+                '请输入方向怪物的数量:',
+                '是否添加电磁炮(>0为true):',
+                '硬核模式(>0为true):',
+                '请输入BPM:'};
     dlgtitle = 'Lethal Rhythm';
     dims = [1 35];
-    definput = {'15','8','3','3','1','0','60'};
+    definput = {'15',
+                '8',
+                '3',
+                '3',
+                '1',
+                '0',
+                '60'};
     answer = inputdlg(prompt, dlgtitle, dims, definput);
 
     % 将输入转换为数值
@@ -56,25 +76,43 @@ function LR
     player = [round(mapSize/2), round(mapSize/2)]; % 人物初始位置
 
     % 初始化怪物
-    enemiesLocation = [randi(mapSize, numEnemy1, 2);    randi(mapSize, numEnemy2, 2);   randi(mapSize, numEnemy3,2); 
-                        ones(numEnemy4,2);              mapSize*ones(numEnemy4,2)];
+    enemiesLocation =   [randi(mapSize, numEnemy1, 2);    
+                        randi(mapSize, numEnemy2, 2);   
+                        randi(mapSize, numEnemy3,2); 
+                        ones(numEnemy4,2);              
+                        mapSize*ones(numEnemy4,2)];
 
-    enemiesOriginHp = [2*ones(numEnemy1,1);             ones(numEnemy2,1);              ones(numEnemy3,1); 
-                        7*ones(numEnemy4,1);            7*ones(numEnemy4,1)];
+    enemiesOriginHp =   [2*ones(numEnemy1,1);             
+                        ones(numEnemy2,1);              
+                        ones(numEnemy3,1); 
+                        7*ones(numEnemy4,1);            
+                        7*ones(numEnemy4,1)];
 
     enemiesHp = enemiesOriginHp;
 
-    enemiesType = [ones(numEnemy1,1);                   2*ones(numEnemy2,1);            3*ones(numEnemy3,1); 
-                    7*ones(numEnemy4,1);                8*ones(numEnemy4,1)];
+    enemiesType =   [ones(numEnemy1,1);                   
+                    2*ones(numEnemy2,1);            
+                    3*ones(numEnemy3,1); 
+                    7*ones(numEnemy4,1);                
+                    8*ones(numEnemy4,1)];
 
-    enemiesRhythm = [ones(numEnemy1,1);                 2*ones(numEnemy2,1);            ones(numEnemy3,1); 
-                    2*ones(numEnemy4,1);                2*ones(numEnemy4,1)];
+    enemiesRhythm = [ones(numEnemy1,1);                 
+                    2*ones(numEnemy2,1);            
+                    ones(numEnemy3,1); 
+                    2*ones(numEnemy4,1);                
+                    2*ones(numEnemy4,1)];
 
-    enemiesCount = [ones(numEnemy1,1);                 2*ones(numEnemy2,1);            ones(numEnemy3,1); 
-                    0*ones(numEnemy4,1);                0*ones(numEnemy4,1)];
+    enemiesCount = [ones(numEnemy1,1);                 
+                    2*ones(numEnemy2,1);            
+                    ones(numEnemy3,1); 
+                    0*ones(numEnemy4,1);                
+                    0*ones(numEnemy4,1)];
 
-    enemiesScore = [0*ones(numEnemy1,1);                2*ones(numEnemy2,1);            ones(numEnemy3,1); 
-                    0*ones(numEnemy4,1);               0*ones(numEnemy4,1)];
+    enemiesScore = [0*ones(numEnemy1,1);                
+                    2*ones(numEnemy2,1);            
+                    ones(numEnemy3,1); 
+                    0*ones(numEnemy4,1);               
+                    0*ones(numEnemy4,1)];
 
     % 大炮弹幕
     HorizontalFirePointer = line([-0.8 -0.8], ylim, 'Color', 'r', 'LineWidth', 4, 'LineStyle', '--');
@@ -92,6 +130,7 @@ function LR
     end
 
     set(gcf, 'KeyPressFcn', @key) % 设置键盘回调
+    set(gcf, 'CloseRequestFcn', @closeGame);
 
     fps = 10; % 每秒传输帧数
     game = timer('ExecutionMode', 'FixedRate', 'Period', 1/fps, 'TimerFcn', @gameFunction);
@@ -381,6 +420,11 @@ function LR
     %--------------------------------------------------------------------------
     % 敌人重生
     function enemyReborn(index)
+        if isnumeric(score)
+            score = score + enemiesScore(index);
+        else
+            warning('Score is not numeric. Check for issues.');
+        end
         score = score + enemiesScore(index);
         set(scoreText, 'String', ['Score: ', num2str(score)]);
         switch enemiesType(index)
@@ -477,7 +521,16 @@ function LR
     % 游戏设置
     function gameSetting
     end
-
+    function closeGame(~, ~)
+    try
+        stop(game);
+        stop(beatTimer);
+        stop(beatTimer2);
+        stop(playerAudio); % 停止音频
+    catch
+    end
+    delete(gcf); % 删除窗口
+end
     %--------------------------------------------------------------------------
     % 获取颜色和形状
     function [color, shape] = getColorAndShape(type, hp)
